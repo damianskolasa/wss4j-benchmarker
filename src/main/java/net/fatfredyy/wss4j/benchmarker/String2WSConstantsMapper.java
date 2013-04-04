@@ -1,0 +1,19 @@
+package net.fatfredyy.wss4j.benchmarker;
+
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
+import org.apache.ws.security.WSConstants;
+
+public class String2WSConstantsMapper {
+	
+	public static HashMap<String, String> string2WSconstantMap = new LinkedHashMap<String, String>();
+	
+	static {
+		string2WSconstantMap.put("SHA1", WSConstants.SHA1);
+		string2WSconstantMap.put("SHA256", WSConstants.SHA256);
+		string2WSconstantMap.put("SHA384", WSConstants.SHA384);
+		string2WSconstantMap.put("SHA512", WSConstants.SHA512);
+	}
+
+}
