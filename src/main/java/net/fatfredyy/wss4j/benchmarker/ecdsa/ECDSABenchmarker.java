@@ -1,5 +1,8 @@
 package net.fatfredyy.wss4j.benchmarker.ecdsa;
 
+import java.io.FileWriter;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 
@@ -17,25 +20,63 @@ import org.apache.ws.security.handler.RequestData;
 import org.apache.ws.security.message.WSSecHeader;
 import org.apache.ws.security.message.WSSecSignature;
 import org.apache.ws.security.util.WSSecurityUtil;
+import org.bouncycastle.jce.ECNamedCurveTable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class ECDSABenchmarker {
-	
-	
 
-	public String banchmarkSignle() throws Exception {
+	private FileWriter fs;
+	private FileWriter fv;
 
-		Properties ecdsaMerlinProperties = createECDSAMerlinProperties("prime193v1", "SHA256");
+	static List<String> digestAlgorithms = Arrays.asList("SHA1", "SHA256", "SHA384", "SHA512");
+
+	private static final String SEP = ";";
+
+	public ECDSABenchmarker() throws Exception {
+		fs = new FileWriter("ecdsa_benchmark_sign.csv");
+		fv = new FileWriter("ecdsa_benchmark_verify.csv");
+	}
+
+	@SuppressWarnings("unchecked")
+	public void benchmark() throws Exception {
+		Enumeration<String> namedCurves = ECNamedCurveTable.getNames();
+		fs.write("curve_name;cert_digest;digest;time\n");
+		fv.write("curve_name;cert_digest;digest;time\n");
+		while (namedCurves.hasMoreElements()) {
+			String curveName = namedCurves.nextElement();
+			for (String certDigestAlg : digestAlgorithms) {
+				for (String digestAlg : digestAlgorithms) {
+					benchmarkLoop(curveName, certDigestAlg, "ECDSA_" + digestAlg, digestAlg);
+				}
+
+			}
+
+		}
+	}
+
+	private void benchmarkLoop(String curveName, String certDigest, String algSuit, String digest) throws Exception {
+		for (int i = 0; i < 1000; i++) {
+			banchmarkSignle(curveName, certDigest, algSuit, digest);
+		}
+	}
+
+	private void banchmarkSignle(String curveName, String certDigest, String algSuit, String digest) throws Exception {
+
+		Properties ecdsaMerlinProperties = createECDSAMerlinProperties(curveName, certDigest);
 		Crypto ecdsaCrypto = CryptoFactory.getInstance(ecdsaMerlinProperties);
 
 		long start = System.currentTimeMillis();
-		Document signedDoc = signSOAPMessage(ecdsaCrypto, WSConstants.ECDSA_SHA1, WSConstants.SHA1);
+		Document signedDoc = signSOAPMessage(ecdsaCrypto, algSuit, digest);
 		long mid = System.currentTimeMillis();
 		verifySOAPMessageSignature(ecdsaCrypto, signedDoc);
 		long end = System.currentTimeMillis();
 
-		return "B-163;SHA1;" + (end - mid) + ";" + (mid - start);
+		fs.write(curveName + SEP + certDigest + SEP + digest + SEP + (mid - start));
+		fv.write(curveName + SEP + certDigest + SEP + digest + SEP + (end - mid));
+		fs.flush();
+		fv.flush();
+		System.gc();
 
 	}
 
@@ -60,7 +101,7 @@ public class ECDSABenchmarker {
 		return signedDoc;
 	}
 
-	public static AlgorithmSuite createECDSAAlgorithmSuite() {
+	private static AlgorithmSuite createECDSAAlgorithmSuite() {
 		AlgorithmSuite algorithmSuite = new AlgorithmSuite();
 		algorithmSuite.addSignatureMethod(WSConstants.ECDSA_SHA1);
 		algorithmSuite.addSignatureMethod(WSConstants.ECDSA_SHA256);
@@ -90,7 +131,7 @@ public class ECDSABenchmarker {
 		return secEngine.processSecurityHeader(securityHeader, data);
 	}
 
-	public Properties createECDSAMerlinProperties(String curveName, String certDigestAlg) {
+	private static Properties createECDSAMerlinProperties(String curveName, String certDigestAlg) {
 		Properties cryptoProps = new Properties();
 		cryptoProps.put("org.apache.ws.security.crypto.provider", "org.apache.ws.security.components.crypto.Merlin");
 		cryptoProps.put("org.apache.ws.security.crypto.merlin.keystore.type", "pkcs12");

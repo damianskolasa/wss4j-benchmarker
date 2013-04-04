@@ -3,6 +3,8 @@ package net.fatfredyy.wss4j.benchmarker.main;
 import java.util.List;
 import java.util.Properties;
 
+import net.fatfredyy.wss4j.benchmarker.ecdsa.ECDSABenchmarker;
+
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSConfig;
 import org.apache.ws.security.WSSecurityEngine;
@@ -29,7 +31,7 @@ public class Main {
 	public String checkECDSAwithSHA1Speed() throws Exception {
 		
 		
-		
+		return null;
 		
 	}
 	
@@ -103,12 +105,9 @@ public class Main {
 	}
 
 	public static void main(String[] args) throws Exception {
-		byte[] bt = new byte[10];
-		System.in.read(bt, 0, 1);
-		Main signatureMethodsBenchmarkTest = new Main();
-		signatureMethodsBenchmarkTest.checkECDSAwithSHA1Loop();
-		System.out.println("----------------------------------");
-		signatureMethodsBenchmarkTest.checkRSAwithSHA1Loop();
+		if ("ecdsa".equalsIgnoreCase(args[1])) {
+			new ECDSABenchmarker().benchmark();
+		}
 
 	}
 
