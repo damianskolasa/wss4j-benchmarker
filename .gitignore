@@ -2,3 +2,7 @@
 /.settings
 /.classpath
 /.project
+/dsa_benchmark_sign.csv
+/dsa_benchmark_verify.csv
+/rsa_benchmark_sign.csv
+/rsa_benchmark_verify.csv
