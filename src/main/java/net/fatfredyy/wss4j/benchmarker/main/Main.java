@@ -1,10 +1,15 @@
 package net.fatfredyy.wss4j.benchmarker.main;
 
+import java.security.Security;
 import java.util.List;
-import java.util.Properties;
 
+import javax.xml.crypto.dsig.XMLSignatureFactory;
+
+import net.fatfredyy.wss4j.benchmarker.dsa.DSABenchmarker;
 import net.fatfredyy.wss4j.benchmarker.ecdsa.ECDSABenchmarker;
+import net.fatfredyy.wss4j.benchmarker.rsa.RSABenchmarker;
 
+import org.apache.jcp.xml.dsig.internal.dom.XMLDSigRI;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSConfig;
 import org.apache.ws.security.WSSecurityEngine;
@@ -16,6 +21,7 @@ import org.apache.ws.security.handler.RequestData;
 import org.apache.ws.security.message.WSSecHeader;
 import org.apache.ws.security.message.WSSecSignature;
 import org.apache.ws.security.util.WSSecurityUtil;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -105,9 +111,13 @@ public class Main {
 	}
 
 	public static void main(String[] args) throws Exception {
-		if ("ecdsa".equalsIgnoreCase(args[1])) {
-			new ECDSABenchmarker().benchmark();
-		}
+		Security.addProvider(new BouncyCastleProvider());
+		Security.addProvider(new XMLDSigRI());
+		//if ("ecdsa".equalsIgnoreCase(args[1])) {
+			//new ECDSABenchmarker().benchmark();
+		//new DSABenchmarker().benchmark();
+		new RSABenchmarker().benchmark();
+		//}
 
 	}
 
