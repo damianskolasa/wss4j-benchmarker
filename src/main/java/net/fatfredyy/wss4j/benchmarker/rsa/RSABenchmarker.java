@@ -1,6 +1,7 @@
 package net.fatfredyy.wss4j.benchmarker.rsa;
 
 import java.io.FileWriter;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -8,6 +9,7 @@ import java.util.Properties;
 import net.fatfredyy.wss4j.benchmarker.SOAPUtil;
 import net.fatfredyy.wss4j.benchmarker.String2WSConstantsMapper;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSConfig;
 import org.apache.ws.security.WSSecurityEngine;
@@ -24,51 +26,83 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class RSABenchmarker {
-	
+
 	private FileWriter fs;
 	private FileWriter fv;
-	private FileWriter tab;
+	private FileWriter tabSign;
+	private FileWriter tabVrf;
+	private boolean first = true;
 
 	static List<String> digestAlgorithms = Arrays.asList("SHA1", "SHA256", "SHA512");
-	
+
 	static List<String> keySizes = Arrays.asList("1024", "3072", "7680", "15360");
-	
+
 	private static final String SEP = ";";
 
+	private SummaryStatistics signStat = new SummaryStatistics();
+	private SummaryStatistics vrfStat = new SummaryStatistics();
+
+	private DecimalFormat dc = new DecimalFormat("####0.00");
+
 	public RSABenchmarker() throws Exception {
-		fs = new FileWriter("rsa_benchmark_sign.csv");
-		fv = new FileWriter("rsa_benchmark_verify.csv");
-		tab = new FileWriter("rsa_benchmark_tab.tex");
+		fs = new FileWriter("rsa_benchmark_sign1.csv");
+		fv = new FileWriter("rsa_benchmark_verify1.csv");
+		tabSign = new FileWriter("rsa_benchmark_tab_sign.tex");
+		tabVrf = new FileWriter("rsa_benchmark_tab_vrf.tex");
 	}
 
 	public void benchmark() throws Exception {
 		fs.write("size;cert_digest;digest;time\n");
 		fv.write("size;cert_digest;digest;time\n");
-		tab.write("\\begin{tabular}{| l | l | l | l | l |}\n");
-		tab.write("\\hline\n");
-		tab.write("Rozmiar klucza & Skrót wiadomości & Skrót certyfikatu & Czas podpisu & Czas weryfikacji \\\\ \\hline \n");
+		tabSign.write("\\begin{longtable}{| l | l | l | l | l |l |l |l |l |}\n");
+		tabSign.write("\\hline\n");
+		tabSign.write("\\parbox[t]{15mm}{\\centering Rozmiar\\\\ klucza} & \\parbox[t]{15mm}{\\centering Skrót\\\\ wiadomości} & \\parbox[t]{2cm}{\\centering Skrót\\\\ certyfikatu} &  \\parbox[t]{10mm}{\\centering Czas\\\\  min. [ms]} & \\parbox[t]{10mm}{\\centering Czas\\\\ max. [ms]}  & \\parbox[t]{2cm}{\\centering Mediana} & \\parbox[t]{2cm}{\\centering Wariancja} & \\parbox[t]{30mm}{\\centering Odchylenie\\\\ standardowe} \\\\ \\hline \n");
+		tabSign.write("\\endhead\n");
+		
+		tabVrf.write("\\begin{longtable}{| l | l | l | l | l |l |l |l |l |}\n");
+		tabVrf.write("\\hline\n");
+		tabVrf.write("\\parbox[t]{15mm}{\\centering Rozmiar\\\\ klucza} & \\parbox[t]{15mm}{\\centering Skrót\\\\ wiadomości} & \\parbox[t]{2cm}{\\centering Skrót\\\\ certyfikatu} &  \\parbox[t]{10mm}{\\centering Czas\\\\  min. [ms]} & \\parbox[t]{10mm}{\\centering Czas\\\\ max. [ms]}  & \\parbox[t]{2cm}{\\centering Mediana} & \\parbox[t]{2cm}{\\centering Wariancja} & \\parbox[t]{30mm}{\\centering Odchylenie\\\\ standardowe} \\\\ \\hline \n");
+		tabVrf.write("\\endhead\n");
+		
 		for (String keySize : keySizes) {
 			for (String certDigestAlg : digestAlgorithms) {
 				for (String digestAlg : digestAlgorithms) {
 					benchmarkLoop(keySize, certDigestAlg, digestAlg);
 				}
-
 			}
-
 		}
-		tab.write("\\hline\n");
-		tab.write("\\end{tabular}");
-		tab.flush();
+		tabSign.write("\\caption{longtable}\n");
+		tabSign.write("\\end{longtable}");
+		tabSign.flush();
+
+		tabVrf.write("\\caption{aa}\n");
+		tabVrf.write("\\end{longtable}");
+		tabVrf.flush();
 	}
 
 	private void benchmarkLoop(String size, String certDigest, String digest) throws Exception {
 		System.out.println("Trying: " + size + ", " + certDigest + ", " + digest);
+		if (first) {
+			banchmarkSignle(size, certDigest, digest);
+			first = false;
+		}
+
 		for (int i = 0; i < 10; i++) {
 			banchmarkSignle(size, certDigest, digest);
 		}
 		fs.flush();
 		fv.flush();
-		tab.flush();
+		tabSign.write(size + " & " + digest + " & " + certDigest + " & " + dc.format(signStat.getMin()) + " & "
+				+ dc.format(signStat.getMax()) + " & " + dc.format(signStat.getMean()) + " & " + dc.format(signStat.getVariance()) + " & "
+				+ dc.format(signStat.getStandardDeviation()) + " \\\\ \\hline \n");
+		tabSign.flush();
+		tabVrf.write(size + " & " + digest + " & " + certDigest + " & " + dc.format(vrfStat.getMin()) + " & " + dc.format(vrfStat.getMax())
+				+ " & " + dc.format(vrfStat.getMean()) + " & " + dc.format(vrfStat.getVariance()) + " & "
+				+ dc.format(vrfStat.getStandardDeviation()) + " \\\\ \\hline \n");
+		tabVrf.flush();
+		signStat = new SummaryStatistics();
+		vrfStat = new SummaryStatistics();
+		System.gc();
 	}
 
 	public void banchmarkSignle(String size, String certDigest, String digest) throws Exception {
@@ -76,15 +110,20 @@ public class RSABenchmarker {
 		Crypto dsaCrypto = CryptoFactory.getInstance(dsaMerlinProperties);
 
 		long start = System.currentTimeMillis();
-		Document signedDoc = signSOAPMessage(dsaCrypto,  String2WSConstantsMapper.string2WSconstantMap.get("RSA_" +digest), String2WSConstantsMapper.string2WSconstantMap.get(digest));
+		Document signedDoc = signSOAPMessage(dsaCrypto, String2WSConstantsMapper.string2WSconstantMap.get("RSA_" + digest),
+				String2WSConstantsMapper.string2WSconstantMap.get(digest));
 		long mid = System.currentTimeMillis();
 		verifySOAPMessageSignature(dsaCrypto, signedDoc);
 		long end = System.currentTimeMillis();
-		
+
+		if (!first) {
+			signStat.addValue(new Double(mid - start));
+			vrfStat.addValue(new Double(end - mid));
+		}
+
 		fs.write(size + SEP + certDigest + SEP + digest + SEP + (mid - start) + "\n");
 		fv.write(size + SEP + certDigest + SEP + digest + SEP + (end - mid) + "\n");
-		tab.write(size + " & " + digest + " & " + certDigest+ " & " +(mid - start)+ " & "+(end - mid)+" \\\\ \\hline \n");
-		
+
 		System.gc();
 	}
 
