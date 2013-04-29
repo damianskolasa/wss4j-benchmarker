@@ -115,9 +115,9 @@ public class Main {
 		Security.addProvider(new BouncyCastleProvider());
 		Security.addProvider(new XMLDSigRI());
 		//if ("ecdsa".equalsIgnoreCase(args[1])) {
-			//new ECDSABenchmarker().benchmark();
+			new ECDSABenchmarker().benchmark();
 		//new DSABenchmarker().benchmark();
-		new RSABenchmarker().benchmark();
+		//new RSABenchmarker().benchmark();
 		//}
 
 	}
