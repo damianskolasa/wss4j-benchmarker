@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import net.fatfredyy.wss4j.benchmarker.SOAPUtil;
 import net.fatfredyy.wss4j.benchmarker.String2WSConstantsMapper;
-import net.fatfredyy.wss4j.benchmarker.main.SOAPUtil;
 
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSConfig;
@@ -27,21 +27,26 @@ public class RSABenchmarker {
 	
 	private FileWriter fs;
 	private FileWriter fv;
+	private FileWriter tab;
 
 	static List<String> digestAlgorithms = Arrays.asList("SHA1", "SHA256", "SHA512");
 	
-	static List<String> keySizes = Arrays.asList("1024", "2048", "4096", "8192");
+	static List<String> keySizes = Arrays.asList("1024", "3072", "7680", "15360");
 	
 	private static final String SEP = ";";
 
 	public RSABenchmarker() throws Exception {
 		fs = new FileWriter("rsa_benchmark_sign.csv");
 		fv = new FileWriter("rsa_benchmark_verify.csv");
+		tab = new FileWriter("rsa_benchmark_tab.tex");
 	}
 
 	public void benchmark() throws Exception {
 		fs.write("size;cert_digest;digest;time\n");
 		fv.write("size;cert_digest;digest;time\n");
+		tab.write("\\begin{tabular}{| l | l | l | l | l |}\n");
+		tab.write("\\hline\n");
+		tab.write("Rozmiar klucza & Skrót wiadomości & Skrót certyfikatu & Czas podpisu & Czas weryfikacji \\\\ \\hline \n");
 		for (String keySize : keySizes) {
 			for (String certDigestAlg : digestAlgorithms) {
 				for (String digestAlg : digestAlgorithms) {
@@ -51,6 +56,9 @@ public class RSABenchmarker {
 			}
 
 		}
+		tab.write("\\hline\n");
+		tab.write("\\end{tabular}");
+		tab.flush();
 	}
 
 	private void benchmarkLoop(String size, String certDigest, String digest) throws Exception {
@@ -60,6 +68,7 @@ public class RSABenchmarker {
 		}
 		fs.flush();
 		fv.flush();
+		tab.flush();
 	}
 
 	public void banchmarkSignle(String size, String certDigest, String digest) throws Exception {
@@ -71,12 +80,12 @@ public class RSABenchmarker {
 		long mid = System.currentTimeMillis();
 		verifySOAPMessageSignature(dsaCrypto, signedDoc);
 		long end = System.currentTimeMillis();
-
+		
 		fs.write(size + SEP + certDigest + SEP + digest + SEP + (mid - start) + "\n");
 		fv.write(size + SEP + certDigest + SEP + digest + SEP + (end - mid) + "\n");
+		tab.write(size + " & " + digest + " & " + certDigest+ " & " +(mid - start)+ " & "+(end - mid)+" \\\\ \\hline \n");
 		
 		System.gc();
-
 	}
 
 	private void verifySOAPMessageSignature(Crypto dsaCrypto, Document signedDoc) throws WSSecurityException, Exception {

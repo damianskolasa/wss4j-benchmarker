@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.xml.crypto.dsig.XMLSignatureFactory;
 
+import net.fatfredyy.wss4j.benchmarker.SOAPUtil;
 import net.fatfredyy.wss4j.benchmarker.dsa.DSABenchmarker;
 import net.fatfredyy.wss4j.benchmarker.ecdsa.ECDSABenchmarker;
 import net.fatfredyy.wss4j.benchmarker.rsa.RSABenchmarker;

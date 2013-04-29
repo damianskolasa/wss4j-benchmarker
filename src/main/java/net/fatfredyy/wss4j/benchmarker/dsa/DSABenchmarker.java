@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import net.fatfredyy.wss4j.benchmarker.SOAPUtil;
 import net.fatfredyy.wss4j.benchmarker.String2WSConstantsMapper;
-import net.fatfredyy.wss4j.benchmarker.main.SOAPUtil;
 
 import org.apache.ws.security.WSConstants;
 import org.apache.ws.security.WSSConfig;

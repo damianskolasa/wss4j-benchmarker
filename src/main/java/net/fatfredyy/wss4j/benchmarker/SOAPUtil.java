@@ -1,4 +1,4 @@
-package net.fatfredyy.wss4j.benchmarker.main;
+package net.fatfredyy.wss4j.benchmarker;
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
