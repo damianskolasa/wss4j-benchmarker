@@ -1,6 +1,5 @@
 package net.fatfredyy.wss4j.benchmarker.ecdsa;
 
-import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -142,9 +141,7 @@ public class ECDSABenchmarker {
 			sign.setKeySize(size);
 			sign.setDigestName(digestName);
 			sign.setCertDigestName(certDigest);
-			sign.setMin(signStat.getMin());
-			sign.setMax(signStat.getMax());
-			sign.setMean(signStat.getMean());
+			sign.setMin(new Double(mid - start));
 			sign.setVariance(signStat.getVariance());
 			sign.setStdDeviation(signStat.getStandardDeviation());
 			sign.setScheme("ECC");
@@ -155,9 +152,7 @@ public class ECDSABenchmarker {
 			vrf.setKeySize(size);
 			vrf.setDigestName(digestName);
 			vrf.setCertDigestName(certDigest);
-			vrf.setMin(vrfStat.getMin());
-			vrf.setMax(vrfStat.getMax());
-			vrf.setMean(vrfStat.getMean());
+			vrf.setMin(new Double(end - mid));
 			vrf.setVariance(vrfStat.getVariance());
 			vrf.setStdDeviation(vrfStat.getStandardDeviation());
 			vrf.setScheme("ECC");

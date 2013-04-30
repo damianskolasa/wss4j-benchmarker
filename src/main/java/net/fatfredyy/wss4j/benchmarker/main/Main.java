@@ -4,8 +4,7 @@ import java.security.Security;
 import java.util.List;
 
 import net.fatfredyy.wss4j.benchmarker.SOAPUtil;
-import net.fatfredyy.wss4j.benchmarker.dbstore.HibernateUtil;
-import net.fatfredyy.wss4j.benchmarker.dbstore.SignaturePerformanceSample;
+import net.fatfredyy.wss4j.benchmarker.ecdsa.ECDSABenchmarker;
 
 import org.apache.jcp.xml.dsig.internal.dom.XMLDSigRI;
 import org.apache.ws.security.WSConstants;
@@ -20,7 +19,6 @@ import org.apache.ws.security.message.WSSecHeader;
 import org.apache.ws.security.message.WSSecSignature;
 import org.apache.ws.security.util.WSSecurityUtil;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.hibernate.Session;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -110,7 +108,7 @@ public class Main {
 		Security.addProvider(new BouncyCastleProvider());
 		Security.addProvider(new XMLDSigRI());
 		// if ("ecdsa".equalsIgnoreCase(args[1])) {
-		// new ECDSABenchmarker().benchmark();
+		new ECDSABenchmarker().benchmark();
 		// new DSABenchmarker().benchmark();
 		// new RSABenchmarker().benchmark();
 		// }

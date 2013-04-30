@@ -1,13 +1,13 @@
 package net.fatfredyy.wss4j.benchmarker.rsa;
 
-import java.io.FileWriter;
-import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
 import net.fatfredyy.wss4j.benchmarker.SOAPUtil;
 import net.fatfredyy.wss4j.benchmarker.String2WSConstantsMapper;
+import net.fatfredyy.wss4j.benchmarker.dbstore.HibernateUtil;
+import net.fatfredyy.wss4j.benchmarker.dbstore.SignaturePerformanceSample;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.ws.security.WSConstants;
@@ -22,47 +22,25 @@ import org.apache.ws.security.handler.RequestData;
 import org.apache.ws.security.message.WSSecHeader;
 import org.apache.ws.security.message.WSSecSignature;
 import org.apache.ws.security.util.WSSecurityUtil;
+import org.hibernate.Session;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class RSABenchmarker {
 
-	private FileWriter fs;
-	private FileWriter fv;
-	private FileWriter tabSign;
-	private FileWriter tabVrf;
 	private boolean first = true;
 
 	static List<String> digestAlgorithms = Arrays.asList("SHA1", "SHA256", "SHA512");
 
 	static List<String> keySizes = Arrays.asList("1024", "3072", "7680", "15360");
-
-	private static final String SEP = ";";
-
+	
 	private SummaryStatistics signStat = new SummaryStatistics();
 	private SummaryStatistics vrfStat = new SummaryStatistics();
 
-	private DecimalFormat dc = new DecimalFormat("####0.00");
-
 	public RSABenchmarker() throws Exception {
-		fs = new FileWriter("rsa_benchmark_sign1.csv");
-		fv = new FileWriter("rsa_benchmark_verify1.csv");
-		tabSign = new FileWriter("rsa_benchmark_tab_sign.tex");
-		tabVrf = new FileWriter("rsa_benchmark_tab_vrf.tex");
 	}
 
 	public void benchmark() throws Exception {
-		fs.write("size;cert_digest;digest;time\n");
-		fv.write("size;cert_digest;digest;time\n");
-		tabSign.write("\\begin{longtable}{| l | l | l | l | l |l |l |l |l |}\n");
-		tabSign.write("\\hline\n");
-		tabSign.write("\\parbox[t]{15mm}{\\centering Rozmiar\\\\ klucza} & \\parbox[t]{15mm}{\\centering Skrót\\\\ wiadomości} & \\parbox[t]{2cm}{\\centering Skrót\\\\ certyfikatu} &  \\parbox[t]{10mm}{\\centering Czas\\\\  min. [ms]} & \\parbox[t]{10mm}{\\centering Czas\\\\ max. [ms]}  & \\parbox[t]{2cm}{\\centering Mediana} & \\parbox[t]{2cm}{\\centering Wariancja} & \\parbox[t]{30mm}{\\centering Odchylenie\\\\ standardowe} \\\\ \\hline \n");
-		tabSign.write("\\endhead\n");
-		
-		tabVrf.write("\\begin{longtable}{| l | l | l | l | l |l |l |l |l |}\n");
-		tabVrf.write("\\hline\n");
-		tabVrf.write("\\parbox[t]{15mm}{\\centering Rozmiar\\\\ klucza} & \\parbox[t]{15mm}{\\centering Skrót\\\\ wiadomości} & \\parbox[t]{2cm}{\\centering Skrót\\\\ certyfikatu} &  \\parbox[t]{10mm}{\\centering Czas\\\\  min. [ms]} & \\parbox[t]{10mm}{\\centering Czas\\\\ max. [ms]}  & \\parbox[t]{2cm}{\\centering Mediana} & \\parbox[t]{2cm}{\\centering Wariancja} & \\parbox[t]{30mm}{\\centering Odchylenie\\\\ standardowe} \\\\ \\hline \n");
-		tabVrf.write("\\endhead\n");
 		
 		for (String keySize : keySizes) {
 			for (String certDigestAlg : digestAlgorithms) {
@@ -71,13 +49,6 @@ public class RSABenchmarker {
 				}
 			}
 		}
-		tabSign.write("\\caption{longtable}\n");
-		tabSign.write("\\end{longtable}");
-		tabSign.flush();
-
-		tabVrf.write("\\caption{aa}\n");
-		tabVrf.write("\\end{longtable}");
-		tabVrf.flush();
 	}
 
 	private void benchmarkLoop(String size, String certDigest, String digest) throws Exception {
@@ -90,16 +61,43 @@ public class RSABenchmarker {
 		for (int i = 0; i < 10; i++) {
 			banchmarkSignle(size, certDigest, digest);
 		}
-		fs.flush();
-		fv.flush();
-		tabSign.write(size + " & " + digest + " & " + certDigest + " & " + dc.format(signStat.getMin()) + " & "
-				+ dc.format(signStat.getMax()) + " & " + dc.format(signStat.getMean()) + " & " + dc.format(signStat.getVariance()) + " & "
-				+ dc.format(signStat.getStandardDeviation()) + " \\\\ \\hline \n");
-		tabSign.flush();
-		tabVrf.write(size + " & " + digest + " & " + certDigest + " & " + dc.format(vrfStat.getMin()) + " & " + dc.format(vrfStat.getMax())
-				+ " & " + dc.format(vrfStat.getMean()) + " & " + dc.format(vrfStat.getVariance()) + " & "
-				+ dc.format(vrfStat.getStandardDeviation()) + " \\\\ \\hline \n");
-		tabVrf.flush();
+		SignaturePerformanceSample sign = new SignaturePerformanceSample();
+		SignaturePerformanceSample vrf = new SignaturePerformanceSample();
+		
+		sign.setKeySize(Integer.valueOf(size));
+		sign.setDigestName(digest);
+		sign.setCertDigestName(certDigest);
+		sign.setMin(signStat.getMin());
+		sign.setMax(signStat.getMax());
+		sign.setMean(signStat.getMean());
+		sign.setVariance(signStat.getVariance());
+		sign.setStdDeviation(signStat.getStandardDeviation());
+		sign.setScheme("RSA");
+		sign.setSign(true);
+		sign.setType("A");
+		
+		vrf.setKeySize(Integer.valueOf(size));
+		vrf.setDigestName(digest);
+		vrf.setCertDigestName(certDigest);
+		vrf.setMin(vrfStat.getMin());
+		vrf.setMax(vrfStat.getMax());
+		vrf.setMean(vrfStat.getMean());
+		vrf.setVariance(vrfStat.getVariance());
+		vrf.setStdDeviation(vrfStat.getStandardDeviation());
+		vrf.setScheme("RSA");
+		vrf.setSign(false);
+		vrf.setType("A");
+		
+		Session session = HibernateUtil.getSessionFactory().openSession();
+
+		session.beginTransaction();
+
+		session.save(sign);
+		session.save(vrf);
+
+		session.getTransaction().commit();
+		session.flush();
+		
 		signStat = new SummaryStatistics();
 		vrfStat = new SummaryStatistics();
 		System.gc();
@@ -119,10 +117,40 @@ public class RSABenchmarker {
 		if (!first) {
 			signStat.addValue(new Double(mid - start));
 			vrfStat.addValue(new Double(end - mid));
-		}
+			
+			SignaturePerformanceSample sign = new SignaturePerformanceSample();
+			SignaturePerformanceSample vrf = new SignaturePerformanceSample();
+			
+			sign.setKeySize(Integer.valueOf(size));
+			sign.setDigestName(digest);
+			sign.setCertDigestName(certDigest);
+			sign.setMin(new Double(mid - start));
+			sign.setVariance(signStat.getVariance());
+			sign.setStdDeviation(signStat.getStandardDeviation());
+			sign.setScheme("RSA");
+			sign.setSign(true);
+			sign.setType("S");
+			
+			vrf.setKeySize(Integer.valueOf(size));
+			vrf.setDigestName(digest);
+			vrf.setCertDigestName(certDigest);
+			vrf.setMin(new Double(end - mid));
+			vrf.setVariance(vrfStat.getVariance());
+			vrf.setStdDeviation(vrfStat.getStandardDeviation());
+			vrf.setScheme("RSA");
+			vrf.setSign(false);
+			vrf.setType("S");
+			
+			Session session = HibernateUtil.getSessionFactory().openSession();
 
-		fs.write(size + SEP + certDigest + SEP + digest + SEP + (mid - start) + "\n");
-		fv.write(size + SEP + certDigest + SEP + digest + SEP + (end - mid) + "\n");
+			session.beginTransaction();
+
+			session.save(sign);
+			session.save(vrf);
+
+			session.getTransaction().commit();
+			session.flush();
+		}
 
 		System.gc();
 	}

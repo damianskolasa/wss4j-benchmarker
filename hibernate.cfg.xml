@@ -13,7 +13,7 @@
  
     <property name="show_sql">false</property>
  
-    <property name="format_sql">true</property>
+    <property name="format_sql">false</property>
     <property name="hbm2ddl.auto">create</property>
  
     <!-- JDBC connection pool (use the built-in) -->
