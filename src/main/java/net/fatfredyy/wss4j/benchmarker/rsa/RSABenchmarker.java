@@ -211,7 +211,7 @@ public class RSABenchmarker {
 		cryptoProps.put("org.apache.ws.security.crypto.merlin.keystore.password", "132456");
 		cryptoProps.put("org.apache.ws.security.crypto.merlin.keystore.alias", "certificate");
 		cryptoProps.put("org.apache.ws.security.crypto.merlin.keystore.file",
-				"/home/none/mgr_workspace/certgenerator/src/test/resources/ks_rsa_" + size + "_" + certDigestAlg + ".p12");
+				"keys/ks_rsa_" + size + "_" + certDigestAlg + ".p12");
 
 		return cryptoProps;
 	}
