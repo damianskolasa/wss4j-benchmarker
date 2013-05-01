@@ -18,9 +18,9 @@ public class SortJavaCurves {
 	public static HashMap<Integer, List<String>> group2NameListMap = new LinkedHashMap<Integer, List<String>>();
 	public static List<Integer> keySizes = null;
 	
+	@SuppressWarnings("unchecked")
 	public static void initialize() {
 		Enumeration<String> namedCurves = ECNamedCurveTable.getNames();
-		int namedCurvesCnt = 0;
 		
 		Pattern p = Pattern.compile("\\d{3}");
 		
@@ -31,27 +31,13 @@ public class SortJavaCurves {
 			Integer keySize = Integer.valueOf(m.group());
 			addToMap(keySize, curveName);
 			addToGroupMap(getGroupForKeySize(keySize), curveName);
-			namedCurvesCnt++;
 		}
-		
 		
 		keySizes = new ArrayList<Integer>(size2NameListMap.keySet());
 		
 		Collections.sort(keySizes);
-		System.out.println(keySizes.size());
-		/*
-		for (Integer integer : keySizes) {
-			System.out.println(integer);
-		}
-		
-		System.out.println("We have " + namedCurvesCnt + " named curves defined.");*/
 	}
 	
-	
-
-	public static void main(String[] args) {
-		
-	}
 	
 	private static void addToGroupMap(Integer keySize, String curveName) {
 		List<String> curvesList = group2NameListMap.get(keySize);

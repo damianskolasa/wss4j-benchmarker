@@ -125,8 +125,6 @@ public class RSABenchmarker {
 			sign.setDigestName(digest);
 			sign.setCertDigestName(certDigest);
 			sign.setMin(new Double(mid - start));
-			sign.setVariance(signStat.getVariance());
-			sign.setStdDeviation(signStat.getStandardDeviation());
 			sign.setScheme("RSA");
 			sign.setSign(true);
 			sign.setType("S");
@@ -135,8 +133,6 @@ public class RSABenchmarker {
 			vrf.setDigestName(digest);
 			vrf.setCertDigestName(certDigest);
 			vrf.setMin(new Double(end - mid));
-			vrf.setVariance(vrfStat.getVariance());
-			vrf.setStdDeviation(vrfStat.getStandardDeviation());
 			vrf.setScheme("RSA");
 			vrf.setSign(false);
 			vrf.setType("S");
